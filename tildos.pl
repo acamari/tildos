@@ -118,4 +118,3 @@ sub filter_string
 }
 
 Irssi::signal_add_first('send text', "filter_string");
-
