@@ -17,6 +17,9 @@
 # \:u converts to u with diaeresis on top,    (unicode code point = 252) 
 # \?  converts to inverted question mark,     (unicode code point = 191)
 # \!  converts to inverted exclamation mark,  (unicode code point = 161)
+# \!  converts to inverted exclamation mark,  (unicode code point = 161)
+# \<  converts to guillemotleft,       (unicode code point = 171)
+# \>  converts to close latin quotation,      (unicode code point = 187)
 
 use utf8;
 
@@ -68,6 +71,8 @@ my %sublatex_to_unicode;
 'r'      =>  chr(174),
 '!'      =>  chr(161),
 't'      =>  chr(848),
+'<'      =>  chr(171),
+'>'      =>  chr(187),
 '\\\\'   =>  '\\'
 );
 
@@ -85,13 +90,17 @@ sub sublatex_to_unicode
 # this gets the current position in the string in a C fashion (0 based)
     my $curr_pos = (--pos($string));
 
-    for (keys %sublatex_to_unicode) {
-      if ($string =~ m"\G($escape_char$_)"c ) {
-        my $replace = $sublatex_to_unicode{$_};
+    for my $key (keys %sublatex_to_unicode) {
+# search for something to substitute on the string
+# if you found it then grow our current position to the length of that
+# substitution
+      if ($string =~ m"\G($escape_char$key)"c ) {
+        my $found = $1;
+        my $replace = $sublatex_to_unicode{$key};
         $dest .= $replace;
 # debug      
 # print STDERR "search for ($escape_char$_) in ('".  substr($string, pos($string)). "', pos: ", pos($string), ") dest ($dest)\n";
-        pos($string) += length($1);
+        pos($string) += length($found);
         next CHAR;
       } else {
         #  returns to the inital position on this iteration if this regex didn't
@@ -117,4 +126,4 @@ sub filter_string
   }
 }
 
-Irssi::signal_add_first('send text', "filter_string");
+Irssi::signal_add_first('message public', "filter_string");
