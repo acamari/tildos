@@ -34,12 +34,12 @@ use Irssi qw/active_win/;
 
 $VERSION = "0.0";
 %IRSSI = (
-    authors => "Rafael Díaz de León Plata",
-    contact => 'leon@elinter.net',
-    name => 'tildos.pl',
-    description => 'Script for writing using LaTeX like metachars',
-    license => 'BSD',
-);
+	authors => "Rafael Díaz de León Plata",
+	contact => 'leon@elinter.net',
+	name => 'tildos.pl',
+	description => 'Script for writing using LaTeX like metachars',
+	license => 'BSD',
+ );
 
 # this expands to a single \ in a m/$escape_char/
 my $escape_char = '\\\\';
@@ -48,82 +48,85 @@ my $escape_char = '\\\\';
 my %sublatex_to_unicode; 
 
 %sublatex_to_unicode =  (
-'a'      =>  chr(225),
-'A'      =>  chr(193),
-'e'      =>  chr(233),
-'E'      =>  chr(201),
-':e'     =>  chr(235),
-':E'     =>  chr(203),
-'i'      =>  chr(237),
-'I'      =>  chr(205),
-':i'     =>  chr(239),
-':I'     =>  chr(207),
-'~n'     =>  chr(241),
-'~N'     =>  chr(209),
-'o'      =>  chr(243),
-'O'      =>  chr(211),
-'u'      =>  chr(250),
-'U'      =>  chr(218),
-':u'     =>  chr(252),
-':U'     =>  chr(220),
-'\?'     =>  chr(191),
-'c'      =>  chr(169),
-'r'      =>  chr(174),
-'!'      =>  chr(161),
-'t'      =>  chr(848),
-'<'      =>  chr(171),
-'>'      =>  chr(187),
-'\\\\'   =>  '\\'
+	'a'      =>  chr(225),
+	'A'      =>  chr(193),
+	'e'      =>  chr(233),
+	'E'      =>  chr(201),
+	':e'     =>  chr(235),
+	':E'     =>  chr(203),
+	'i'      =>  chr(237),
+	'I'      =>  chr(205),
+	':i'     =>  chr(239),
+	':I'     =>  chr(207),
+	'~n'     =>  chr(241),
+	'~N'     =>  chr(209),
+	'o'      =>  chr(243),
+	'O'      =>  chr(211),
+	'u'      =>  chr(250),
+	'U'      =>  chr(218),
+	':u'     =>  chr(252),
+	':U'     =>  chr(220),
+	'\?'     =>  chr(191),
+	'c'      =>  chr(169),
+	'r'      =>  chr(174),
+	'!'      =>  chr(161),
+	't'      =>  chr(848),
+	'<'      =>  chr(171),
+	'>'      =>  chr(187),
+	'\\\\'   =>  '\\'
 );
 
-sub sublatex_to_unicode 
+sub 
+sublatex_to_unicode 
 {
-  my ($string) = @_;
-  my $dest;
+	my ($string) = @_;
+	my $dest;
 
-  pos($string) = 0;
+	pos($string) = 0;
 
-  CHAR :
-  while ($string =~ m/\G./g) {
-# debug
-# print STDERR "current pos(", pos($string), ");";
-# this gets the current position in the string in a C fashion (0 based)
-    my $curr_pos = (--pos($string));
+	CHAR :
+	while ($string =~ m/\G./g) {
+		# debug
+		# print STDERR "current pos(", pos($string), ");";
+		# this gets the current position in the string in a C fashion (0 based)
+		my $curr_pos = (--pos($string));
 
-    for my $key (keys %sublatex_to_unicode) {
-# search for something to substitute on the string
-# if you found it then grow our current position to the length of that
-# substitution
-      if ($string =~ m"\G($escape_char$key)"c ) {
-        my $found = $1;
-        my $replace = $sublatex_to_unicode{$key};
-        $dest .= $replace;
-# debug      
-# print STDERR "search for ($escape_char$_) in ('".  substr($string, pos($string)). "', pos: ", pos($string), ") dest ($dest)\n";
-        pos($string) += length($found);
-        next CHAR;
-      } else {
-        #  returns to the inital position on this iteration if this regex didn't
-        #  match
-        pos($string) = $curr_pos;
-      }
-    }
-# if we didn't match anything copy the original char to $dest
-    $dest .= substr($string, $curr_pos,1);
-    pos($string) = $curr_pos + 1;
-  }
+		for my $key (keys %sublatex_to_unicode) {
+		# search for something to substitute on the string
+		# if you found it then grow our current position to the length of that
+		# substitution
+			if ($string =~ m"\G($escape_char$key)"c ) {
+				my $found = $1;
+				my $replace = $sublatex_to_unicode{$key};
+				$dest .= $replace;
+				# debug      
+				# print STDERR "search for ($escape_char$_) in ('".  substr($string, pos($string)). "', pos: ", pos($string), ") dest ($dest)\n";
+				pos($string) += length($found);
+				next CHAR;
+			} else {
+				#  returns to the inital position on this 
+				# iteration if this regex didn't match
+				pos($string) = $curr_pos;
+			}
+		}
+		# if we didn't match anything copy the original char to $dest
+		$dest .= substr($string, $curr_pos,1);
+		pos($string) = $curr_pos + 1;
+	}
 
-  return $dest;
+	return $dest;
 }
 
-sub filter_string
+sub
+filter_string
 {
-  my ($string, $server, $window) = @_;
-  if($string and $window){
-    $string = sublatex_to_unicode($string);
-    Irssi::signal_stop();
-    $window->command('MSG '. $window->{name} ." $string");
-  }
+	my ($string, $server, $window) = @_;
+
+	if($string and $window){
+		$string = sublatex_to_unicode($string);
+		Irssi::signal_stop();
+		$window->command('MSG '. $window->{name} ." $string");
+	}
 }
 
 Irssi::signal_add_first('message public', "filter_string");
