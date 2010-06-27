@@ -4,129 +4,177 @@
 
 # sublatex: 
 #
-# Unicode code points got with ord()
+# Unicode code points from the Unicode Standard
+# (http://www.unicode.org/charts/PDF/U0080.pdf)
 #
-# \a  converts to spanish acute accented a,   (unicode code point = 225) 
-# \e  converts to spanish acute accented e,   (unicode code point = 233) 
-# \:e converts to e with diaeresis on top,    (unicode code point = 235) 
-# \i  converts to spanish acute accented i,   (unicode code point = 237) 
-# \:i converts to i with diaeresis on top,    (unicode code point = 239)
-# \~n converts to spanish tilde accented n,   (unicode code point = 241) 
-# \o  converts to spanish acute accented o,   (unicode code point = 243) 
-# \u  converts to spanish acute accented u,   (unicode code point = 250) 
-# \:u converts to u with diaeresis on top,    (unicode code point = 252) 
-# \?  converts to inverted question mark,     (unicode code point = 191)
-# \!  converts to inverted exclamation mark,  (unicode code point = 161)
-# \!  converts to inverted exclamation mark,  (unicode code point = 161)
-# \<  converts to guillemotleft,       (unicode code point = 171)
-# \>  converts to close latin quotation,      (unicode code point = 187)
+# \A	LATIN CAPITAL LETTER A WITH ACUTE;	U+00C1
+# \a	LATIN SMALL LETTER A WITH ACUTE;	U+00E1
+# \:A	LATIN CAPITAL LETTER A WITH DIAERESIS;	U+00C4
+# \:a	LATIN SMALL LETTER A WITH DIAERESIS;	U+00E4
+# \E	LATIN CAPITAL LETTER E WITH ACUTE;	U+00C9
+# \e	LATIN SMALL LETTER E WITH ACUTE;	U+00E9
+# \:E	LATIN CAPITAL LETTER E WITH DIAERESIS;	U+00CB 
+# \:e	LATIN SMALL LETTER E WITH DIAERESIS;	U+00EB 
+# \I	LATIN CAPITAL LETTER I WITH ACUTE;	U+00CD
+# \i	LATIN SMALL LETTER I WITH ACUTE;	U+00ED
+# \:I	LATIN CAPITAL LETTER I WITH DIAERESIS;	U+00CF 
+# \:i	LATIN SMALL LETTER I WITH DIAERESIS;	U+00EF 
+# \N	LATIN CAPTIAL LETTER N WITH TILDE;	U+00D1
+# \n	LATIN SMALL LETTER N WITH TILDE;	U+00F1
+# \O	LATIN CAPITAL LETTER O WITH ACUTE;	U+00D3
+# \o	LATIN SMALL LETTER O WITH ACUTE;	U+00F3
+# \:O	LATIN CAPITAL LETTER O WITH DIAERESIS;	U+00D6 
+# \:o	LATIN SMALL LETTER O WITH DIAERESIS;	U+00F6 
+# \U	LATIN CAPITAL LETTER U WITH ACUTE;	U+00DA
+# \u	LATIN SMALL LETTER U WITH ACUTE;	U+00FA
+# \:U	LATIN CAPITAL LETTER U WITH DIAERESIS;	U+00DC
+# \:u	LATIN SMALL LETTER U WITH DIAERESIS;	U+00FC
+# \?	INVERTED QUESTION MARK;			U+00BF
+# \!	INVERTED EXCLAMATION MARK;		U+00A1
+# \<	RIGHT-POINTING DOUBLE ANGLE QUOTATION;	U+00AB
+# \<	LEFT-POINTING DOUBLE ANGLE QUOTATION;	U+00BB
 
 use utf8;
 
-use open IO => ':utf8';
+use strict;
+use warnings;
+
+use open IO => ':encoding(UTF-8)';
 use open ':std';
 
-use strict;
+use Irssi;
 
-use vars qw/$VERSION %IRSSI/;
-
-use Irssi qw/active_win/;
-
-$VERSION = "0.0";
-%IRSSI = (
-	authors => "Rafael Díaz de León Plata",
-	contact => 'leon@elinter.net',
+our $VERSION = "0.1";
+our %IRSSI = (
+	authors => "Abel Abraham Camarillo Ojeda",
+	contact => 'acamari@the00z.org',
 	name => 'tildos.pl',
 	description => 'Script for writing using LaTeX like metachars',
-	license => 'BSD',
+	license => 'ISC',
  );
 
+my $debug = 1;
+
 # this expands to a single \ in a m/$escape_char/
-my $escape_char = '\\\\';
+my $esc = '\\\\';
 
 # the keys in this hash are chars that appear after a $escape_char
-my %sublatex_to_unicode; 
+my %latextou		= ();
 
-%sublatex_to_unicode =  (
-	'a'      =>  chr(225),
-	'A'      =>  chr(193),
-	'e'      =>  chr(233),
-	'E'      =>  chr(201),
-	':e'     =>  chr(235),
-	':E'     =>  chr(203),
-	'i'      =>  chr(237),
-	'I'      =>  chr(205),
-	':i'     =>  chr(239),
-	':I'     =>  chr(207),
-	'~n'     =>  chr(241),
-	'~N'     =>  chr(209),
-	'o'      =>  chr(243),
-	'O'      =>  chr(211),
-	'u'      =>  chr(250),
-	'U'      =>  chr(218),
-	':u'     =>  chr(252),
-	':U'     =>  chr(220),
-	'\?'     =>  chr(191),
-	'c'      =>  chr(169),
-	'r'      =>  chr(174),
-	'!'      =>  chr(161),
-	't'      =>  chr(848),
-	'<'      =>  chr(171),
-	'>'      =>  chr(187),
-	'\\\\'   =>  '\\'
+# true for a message if it's parsed
+my $parsed = 0;
+
+%latextou =  (
+	'A'      => "\N{U+00C1}",
+	'a'      => "\N{U+00E1}",
+	':A'      => "\N{U+00C4}",
+	':a'      => "\N{U+00E4}",
+	'E'      => "\N{U+00C9}",
+	'e'     => "\N{U+00E9}",
+	':E'     => "\N{U+00CB}",
+	':e'      => "\N{U+00EB}",
+	'I'      => "\N{U+00CD}",
+	'i'     => "\N{U+00ED}",
+	':I'     => "\N{U+00CF}",
+	':i'      => "\N{U+00EF}",
+	'N'      => "\N{U+00D1}",
+	'n'      => "\N{U+00F1}",
+	'O'      => "\N{U+00D3}",
+	'o'      => "\N{U+00F3}",
+	':O'      => "\N{U+00D6}",
+	':o'     => "\N{U+00F6}",
+	'U'     => "\N{U+00DA}",
+	'u'     => "\N{U+00FA}",
+	':U'      => "\N{U+00DC}",
+	':u'      => "\N{U+00FC}",
+	'\?'      => "\N{U+00BF}",
+	'!'      => "\N{U+00A1}",
+	'<'      => "\N{U+00AB}",
+	'>'      => "\N{U+00BB}",
+	'\\\\'   =>  '\\',
 );
 
 sub 
-sublatex_to_unicode 
+latextou 
 {
-	my ($string) = @_;
-	my $dest;
+	my $str		= shift;
 
-	pos($string) = 0;
-
-	CHAR :
-	while ($string =~ m/\G./g) {
-		# debug
-		# print STDERR "current pos(", pos($string), ");";
-		# this gets the current position in the string in a C fashion (0 based)
-		my $curr_pos = (--pos($string));
-
-		for my $key (keys %sublatex_to_unicode) {
-		# search for something to substitute on the string
-		# if you found it then grow our current position to the length of that
-		# substitution
-			if ($string =~ m"\G($escape_char$key)"c ) {
-				my $found = $1;
-				my $replace = $sublatex_to_unicode{$key};
-				$dest .= $replace;
-				# debug      
-				# print STDERR "search for ($escape_char$_) in ('".  substr($string, pos($string)). "', pos: ", pos($string), ") dest ($dest)\n";
-				pos($string) += length($found);
-				next CHAR;
-			} else {
-				#  returns to the inital position on this 
-				# iteration if this regex didn't match
-				pos($string) = $curr_pos;
-			}
-		}
-		# if we didn't match anything copy the original char to $dest
-		$dest .= substr($string, $curr_pos,1);
-		pos($string) = $curr_pos + 1;
+	my $dst		= undef;
+	my $magic	= chr(0x0a);	# a str can never come with '\n' so we
+					# use it as magical placeholder
+	$str =~ s!$esc$esc!$magic!g;
+	while (my ($k, $v) = each %latextou) {
+		$str =~ s!$esc$k!$v!g;
 	}
+	$str =~ s!$magic!$esc!g;
 
-	return $dest;
+	$dst = $str;
+
+	return $dst;
+}
+
+# returns the hexdump of a string
+sub 
+hdump 
+{
+	my $str 	= shift;
+	my $r 		= undef;
+	
+	$r = "";
+
+	use bytes;
+	$r .= sprintf("%x", ord($_)) for split "", $str;
+	no bytes;
+
+	return $r;
 }
 
 sub
 filter_string
 {
-	my ($string, $server, $window) = @_;
+	my $cmd		= shift;
+	my $server	= shift;
+	my $win		= shift;
 
-	if($string and $window){
-		$string = sublatex_to_unicode($string);
-		Irssi::signal_stop();
-		$window->command('MSG '. $window->{name} ." $string");
+	my ($param, $chan, $msg) = $cmd =~ /^(-\S*\s)?(\S*)\s(.*)/;
+	
+	# XXX: We should be able to get the $window object someway, this hacks
+	# makes /msg #channel \a\a\a
+	# return: \a\a\a
+	# instead of parsing '\a\a\a' 
+	return unless $win and $cmd and $server; # we cannot get all window
+			# objects, then do nothing.
+
+	if ($parsed) {
+		$parsed = 0;
+	} else {
+		&Irssi::print("--------------------------------") if $debug;
+		if ($debug) {
+			&Irssi::print("\$server: $server");
+			&Irssi::print("\$msg: $msg");
+			&Irssi::print("\$chan: $chan");
+			&Irssi::print("\$win: $win");
+			&Irssi::print("\$win:". 
+			(join ',', (map {"$_ => ". $win->{$_}} keys %$win)));
+		}
+
+		if (utf8::is_utf8($msg)) {
+			&Irssi::print("UTF-8 flag is on!")  if $debug;
+		} else {
+			&Irssi::print("UTF-8 flag is off!")  if $debug;
+			die "utf8::decode() failed, stopped" unless utf8::decode($msg);
+			&Irssi::print("UTF-8 flag is now on!")  if $debug 
+		
+		}
+		utf8::upgrade($msg) unless utf8::is_utf8($msg);	# turns utf8 flag on.
+		&Irssi::print("hdump old \$msg: ". hdump($msg)) if $debug;
+		$msg = latextou($msg);
+		&Irssi::print("New \$msg: $msg") if $debug;
+		&Irssi::print("hdump new \$msg: ". hdump($msg)) if $debug;
+		$parsed = 1;
+		&Irssi::signal_emit("command msg", "$chan $msg", $server, $win);
+		&Irssi::signal_stop();
 	}
 }
 
-Irssi::signal_add_first('message public', "filter_string");
+&Irssi::command_bind('msg', \&filter_string);
