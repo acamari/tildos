@@ -2,6 +2,10 @@
 
 # tildos: Script for using LaTeX-like metacharacters in irssi
 
+
+# XXX: Remember to use irssi under an environment that supports LC_ALL and LANG
+# XXX: If you use this under OpenBSD use /set term_charset utf-8
+
 # sublatex: 
 #
 # Unicode code points from the Unicode Standard
