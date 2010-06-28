@@ -56,7 +56,7 @@ our %IRSSI = (
 my $debug = 0;
 
 # this expands to a single \ in a m/$escape_char/
-my $esc = '\\\\';
+my $esc = chr(0x5c);
 
 # the keys in this hash are chars that appear after a $escape_char
 my %latextou		= ();
@@ -91,7 +91,6 @@ my $parsed = 0;
 	'!'      => "\N{U+00A1}",
 	'<'      => "\N{U+00AB}",
 	'>'      => "\N{U+00BB}",
-	'\\\\'   =>  '\\',
 );
 
 sub 
@@ -102,9 +101,10 @@ latextou
 	my $dst		= undef;
 	my $magic	= chr(0x0a);	# a str can never come with '\n' so we
 					# use it as magical placeholder
-	$str =~ s!$esc$esc!$magic!g;
+	# m!\\\\! expands to m!\\!
+	$str =~ s!$esc$esc$esc$esc!$magic!g;
 	while (my ($k, $v) = each %latextou) {
-		$str =~ s!$esc$k!$v!g;
+		$str =~ s!$esc$esc$k!$v!g;
 	}
 	$str =~ s!$magic!$esc!g;
 

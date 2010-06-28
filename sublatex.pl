@@ -8,7 +8,7 @@ use open ':std';
 use strict;
 
 # this expands to a single \ in a m/$escape_char/
-my $esc = '\\\\';
+my $esc = chr(0x5c);
 
 # the keys in this hash are chars that appear after a $escape_char
 my %latextou		= ();
@@ -53,10 +53,11 @@ latextou
 	my $dst	= undef;
 	my $magic	= chr(10);
 
-	$str =~ s!$esc$esc!$magic!g;
+	#  \\\\ expands to \\
+
+	$str =~ s!$esc$esc$esc$esc!$magic!g;
 	while (my ($k, $v) = each %latextou) {
-		$str =~ s!$esc$k!$v!g;
-		print STDERR "$esc$k\n";
+		$str =~ s!$esc$esc$k!$v!g;
 	}
 	$str =~ s!$magic!$esc!g;
 
