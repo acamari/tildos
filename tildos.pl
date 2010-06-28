@@ -39,6 +39,7 @@ use utf8;
 use strict;
 use warnings;
 
+use Encode;
 use open IO => ':encoding(UTF-8)';
 use open ':std';
 
@@ -53,7 +54,7 @@ our %IRSSI = (
 	license => 'ISC',
  );
 
-my $debug = 0;
+my $debug = 1;
 
 # this expands to a single \ in a m/$escape_char/
 my $esc = chr(0x5c);
@@ -158,16 +159,15 @@ filter_string
 			(join ',', (map {"$_ => ". $win->{$_}} keys %$win)));
 		}
 
-		if (utf8::is_utf8($msg)) {
-			&Irssi::print("UTF-8 flag is on!")  if $debug;
-		} else {
-			&Irssi::print("UTF-8 flag is off!")  if $debug;
-			die "utf8::decode() failed, stopped" unless utf8::decode($msg);
-			&Irssi::print("UTF-8 flag is now on!")  if $debug 
-		
-		}
-		utf8::upgrade($msg) unless utf8::is_utf8($msg);	# turns utf8 flag on.
 		&Irssi::print("hdump old \$msg: ". hdump($msg)) if $debug;
+		if (not utf8::is_utf8($msg)) {
+			&Irssi::print("UTF-8 flag is off!")  if $debug;
+			&Encode::_utf8_on($msg);
+			&Irssi::print("UTF-8 flag is now on!")  if $debug;
+		}
+		if (not utf8::is_utf8($msg)) {
+			&Irssi::print("UTF-8 flag is still off!")  if $debug;
+		}
 		$msg = latextou($msg);
 		&Irssi::print("New \$msg: $msg") if $debug;
 		&Irssi::print("hdump new \$msg: ". hdump($msg)) if $debug;
