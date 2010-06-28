@@ -58,7 +58,7 @@ our %IRSSI = (
 	license => 'ISC',
  );
 
-my $debug = 1;
+my $debug = 0;
 
 # this expands to a single \ in a m/$escape_char/
 my $esc = chr(0x5c);
