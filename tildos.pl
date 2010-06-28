@@ -168,6 +168,8 @@ filter_string
 		if (not utf8::is_utf8($msg)) {
 			&Irssi::print("UTF-8 flag is still off!")  if $debug;
 		}
+		&Irssi::print("Mid \$msg: $msg") if $debug;
+		&Irssi::print("hdump mid \$msg: ". hdump($msg)) if $debug;
 		$msg = latextou($msg);
 		&Irssi::print("New \$msg: $msg") if $debug;
 		&Irssi::print("hdump new \$msg: ". hdump($msg)) if $debug;
