@@ -169,7 +169,7 @@ filter_string
 					   # string, we must convert it as a
 					   # perl "character" string.
 		die "Couldn't utf8::decode('$msg')!, are you sure that you ".
-		    "have /set term_charset utf-8are , stopped";
+		    "have /set term_charset utf-8 in irssi?; stopped";
 	} elsif (not $msg = latextou($msg)) {
 		die "Couldn't latextou('$msg')!, stopped";
 	} else {
