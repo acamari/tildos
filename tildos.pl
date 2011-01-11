@@ -1,10 +1,8 @@
 #!/usr/bin/perl
 
-# tildos: Script for using LaTeX-like metacharacters in irssi
-
-
-# XXX: Remember to use irssi under an environment that supports LC_ALL and LANG
-# XXX: If you use this under OpenBSD use /set term_charset utf-8
+# tildos: Script for using LaTeX-like metacharacters in irssi.
+#	  Remember to use irssi under an environment that supports LC_ALL and
+#	  LANG, or /set term_charset UTF-8 on irssi.
 
 # sublatex: 
 #
@@ -42,6 +40,7 @@ use utf8;
 
 use strict;
 use warnings;
+use constant DEBUG => 1;
 
 use Encode;
 use open IO => ':encoding(UTF-8)';
@@ -58,8 +57,6 @@ our %IRSSI = (
 	license => 'ISC',
  );
 
-my $debug = 0;
-
 # this expands to a single \ in a m/$escape_char/
 my $esc = chr(0x5c);
 
@@ -70,33 +67,39 @@ my %latextou		= ();
 my $parsed = 0;
 
 %latextou =  (
-	'A'      => "\N{U+00C1}",
-	'a'      => "\N{U+00E1}",
-	':A'      => "\N{U+00C4}",
-	':a'      => "\N{U+00E4}",
-	'E'      => "\N{U+00C9}",
-	'e'     => "\N{U+00E9}",
-	':E'     => "\N{U+00CB}",
-	':e'      => "\N{U+00EB}",
-	'I'      => "\N{U+00CD}",
-	'i'     => "\N{U+00ED}",
-	':I'     => "\N{U+00CF}",
-	':i'      => "\N{U+00EF}",
-	'N'      => "\N{U+00D1}",
-	'n'      => "\N{U+00F1}",
-	'O'      => "\N{U+00D3}",
-	'o'      => "\N{U+00F3}",
-	':O'      => "\N{U+00D6}",
-	':o'     => "\N{U+00F6}",
-	'U'     => "\N{U+00DA}",
-	'u'     => "\N{U+00FA}",
-	':U'      => "\N{U+00DC}",
-	':u'      => "\N{U+00FC}",
-	'\?'      => "\N{U+00BF}",
-	'!'      => "\N{U+00A1}",
-	'<'      => "\N{U+00AB}",
-	'>'      => "\N{U+00BB}",
+	'A'	=> "\N{U+00C1}",
+	'a'	=> "\N{U+00E1}",
+	':A'	=> "\N{U+00C4}",
+	':a'	=> "\N{U+00E4}",
+	'E'	=> "\N{U+00C9}",
+	'e'	=> "\N{U+00E9}",
+	':E'	=> "\N{U+00CB}",
+	':e'	=> "\N{U+00EB}",
+	'I'	=> "\N{U+00CD}",
+	'i'	=> "\N{U+00ED}",
+	':I'	=> "\N{U+00CF}",
+	':i'	=> "\N{U+00EF}",
+	'N'	=> "\N{U+00D1}",
+	'n'	=> "\N{U+00F1}",
+	'O'	=> "\N{U+00D3}",
+	'o'	=> "\N{U+00F3}",
+	':O'	=> "\N{U+00D6}",
+	':o'	=> "\N{U+00F6}",
+	'U'	=> "\N{U+00DA}",
+	'u'	=> "\N{U+00FA}",
+	':U'	=> "\N{U+00DC}",
+	':u'	=> "\N{U+00FC}",
+	'\?'	=> "\N{U+00BF}",
+	'!'	=> "\N{U+00A1}",
+	'<'	=> "\N{U+00AB}",
+	'>'	=> "\N{U+00BB}",
 );
+
+sub
+debug
+{
+	&Irssi::print(@_) if DEBUG;
+}
 
 sub 
 latextou 
@@ -134,6 +137,7 @@ hdump
 	return $r;
 }
 
+
 sub
 filter_string
 {
@@ -147,40 +151,36 @@ filter_string
 	# makes /msg #channel \a\a\a
 	# return: \a\a\a
 	# instead of parsing '\a\a\a' 
-	return unless $win and $cmd and $server; # we cannot get all window
-			# objects, then do nothing.
+	return unless $win and $cmd and $server; # We cannot get all window
+						 # objects, then do nothing.
+
+	debug("--------------------------------");
+	debug("\$server: $server");
+	debug("\$msg: $msg");
+	debug("\$chan: $chan");
+	debug("\$win: $win");
+	debug("\$win:". 
+	    (join ',', (map {"$_ => ". $win->{$_}} keys %$win)));
+	debug("hdump \$msg: ". hdump($msg));
 
 	if ($parsed) {
 		$parsed = 0;
+	} elsif (not utf8::decode($msg)) { # Irssi sends $cmd has a _byte_
+					   # string, we must convert it as a
+					   # perl "character" string.
+		die "Couldn't utf8::decode('$msg')!, are you sure that you ".
+		    "have /set term_charset utf-8are , stopped";
+	} elsif (not $msg = latextou($msg)) {
+		die "Couldn't latextou('$msg')!, stopped";
 	} else {
-		&Irssi::print("--------------------------------") if $debug;
-		if ($debug) {
-			&Irssi::print("\$server: $server");
-			&Irssi::print("\$msg: $msg");
-			&Irssi::print("\$chan: $chan");
-			&Irssi::print("\$win: $win");
-			&Irssi::print("\$win:". 
-			(join ',', (map {"$_ => ". $win->{$_}} keys %$win)));
-		}
-
-		&Irssi::print("hdump old \$msg: ". hdump($msg)) if $debug;
-		if (not utf8::is_utf8($msg)) {
-			&Irssi::print("UTF-8 flag is off!")  if $debug;
-			&Encode::_utf8_on($msg);
-			&Irssi::print("UTF-8 flag is now on!")  if $debug;
-		}
-		if (not utf8::is_utf8($msg)) {
-			&Irssi::print("UTF-8 flag is still off!")  if $debug;
-		}
-		&Irssi::print("Mid \$msg: $msg") if $debug;
-		&Irssi::print("hdump mid \$msg: ". hdump($msg)) if $debug;
-		$msg = latextou($msg);
-		&Irssi::print("New \$msg: $msg") if $debug;
-		&Irssi::print("hdump new \$msg: ". hdump($msg)) if $debug;
 		$parsed = 1;
+		debug("New \$msg: $msg");
+		debug("hdump new \$msg: ". hdump($msg));
 		&Irssi::signal_emit("command msg", "$chan $msg", $server, $win);
 		&Irssi::signal_stop();
 	}
+
+	return;
 }
 
 &Irssi::command_bind('msg', \&filter_string);
